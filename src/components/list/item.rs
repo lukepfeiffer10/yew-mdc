@@ -55,6 +55,27 @@ impl Into<Classes> for LeadingType {
     }
 }
 
+#[derive(Clone, PartialEq)]
+pub enum TrailingType {
+    Checkbox,
+    Radio,
+    Switch,
+    Icon(String),
+    Meta,
+}
+
+impl Into<Classes> for TrailingType {
+    fn into(self) -> Classes {
+        classes!(match self {
+            TrailingType::Icon(_) => "mdc-list-item--with-trailing-icon",
+            TrailingType::Checkbox => "mdc-list-item--with-trailing-checkbox",
+            TrailingType::Radio => "mdc-list-item--with-trailing-radio",
+            TrailingType::Switch => "mdc-list-item--with-trailing-switch",
+            TrailingType::Meta => "mdc-list-item--with-trailing-meta",
+        })
+    }
+}
+
 pub struct Item {
     node_ref: NodeRef,
     ripple: Option<MDCRipple>,
@@ -74,6 +95,8 @@ pub struct Props {
     pub lines: LineType,
     #[prop_or_default]
     pub leading_item: Option<LeadingType>,
+    #[prop_or_default]
+    pub trailing_item: Option<TrailingType>,
     #[prop_or_default]
     pub children: Children,
     #[prop_or_else(Callback::noop)]
@@ -117,6 +140,7 @@ impl Component for Item {
             text,
             lines,
             leading_item,
+            trailing_item,
             children,
             onclick,
         }: &Props = ctx.props();
@@ -160,17 +184,34 @@ impl Component for Item {
         } else {
             html! {}
         };
+        let trailing_item = if let Some(trailing) = trailing_item {
+            html! {
+                <span class="mdc-list-item__end">
+                {
+                    match trailing {
+                        TrailingType::Icon(icon) => html! {
+                            <i class="material-icons">{ icon }</i>
+                        },
+                        _ => todo!()
+                    }
+                }
+                </span>
+            }
+        } else {
+            html! {}
+        };
         html! {
             <li class={classes}
                 onclick={onclick}
                 ref={self.node_ref.clone()}>
 
-                { children.clone() }
                 <span class="mdc-list-item__ripple"></span>
                 { leading_item }
                 <span id={id.clone()} class="mdc-list-item__content">
                     { text }
+                    { children.clone() }
                 </span>
+                { trailing_item }
             </li>
         }
     }
